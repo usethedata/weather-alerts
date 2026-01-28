@@ -1,0 +1,10 @@
+# Weather Alerts - Python 3.9+ compatible dependencies
+
+# Configuration management
+pyyaml>=6.0,<7.0
+
+# HTTP requests for weather API
+requests>=2.31.0,<3.0
+
+# Type hints backport for Python 3.9
+typing-extensions>=4.7.0,<5.0

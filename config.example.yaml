@@ -1,0 +1,108 @@
+# Weather Alerts Configuration Example
+# Copy this file to config.yaml and fill in your actual values
+# NEVER commit config.yaml to version control!
+
+# Location settings
+location:
+  # US ZIP code or lat/lon coordinates
+  zip_code: "12345"
+  # Alternative: use coordinates
+  # latitude: 40.7128
+  # longitude: -74.0060
+
+# Weather API settings
+weather:
+  # API provider: "nws" (National Weather Service, US only, no key needed) or "openweather"
+  provider: "nws"
+  # Only needed if using OpenWeatherMap
+  # api_key: "your_api_key_here"
+
+# Email settings for alerts
+email:
+  smtp_host: "smtp.fastmail.com"
+  smtp_port: 465
+  use_ssl: true
+  # Your FastMail credentials
+  username: "your_email@fastmail.com"
+  password: "your_app_password_here"
+  from_address: "your_email@fastmail.com"
+  to_addresses:
+    - "recipient@example.com"
+
+# State file to track conditions (e.g., first freeze already occurred)
+state_file: ".weather_alerts_state.json"
+
+# Alert rules - flexible condition and action definitions
+alert_rules:
+  # Example: First freeze of the fall
+  - name: "First Freeze Alert"
+    enabled: true
+    condition:
+      type: "first_occurrence"
+      weather_condition:
+        field: "temperature_min"
+        operator: "lte"  # less than or equal
+        value: 32
+        # Look ahead window in days
+        forecast_days: 2
+      # Track that this is the first time this season
+      season_start_month: 8  # August
+      season_end_month: 12   # December
+    action:
+      type: "email"
+      subject: "ALERT: First Freeze Forecasted"
+      body: |
+        The first freeze of the season is forecasted!
+
+        Forecasted low: {temperature_min}°F on {forecast_date}
+
+        Actions to take:
+        - Drain outdoor faucets
+        - Cover sensitive plants
+        - Check pipe insulation
+
+  # Example: Extreme cold alert
+  - name: "Extreme Cold Alert"
+    enabled: true
+    condition:
+      type: "threshold"
+      weather_condition:
+        field: "temperature_min"
+        operator: "lte"
+        value: 15
+        forecast_days: 2
+    action:
+      type: "email"
+      subject: "ALERT: Extreme Cold Forecasted ({temperature_min}°F)"
+      body: |
+        Extreme cold is forecasted!
+
+        Forecasted low: {temperature_min}°F on {forecast_date}
+
+        Actions to take:
+        - Leave faucets dripping
+        - Open cabinet doors under sinks
+        - Keep heat at minimum 55°F
+
+  # Example: Hot and dry watering alert (disabled by default)
+  - name: "Watering Schedule Alert"
+    enabled: false
+    condition:
+      type: "combined"
+      weather_conditions:
+        - field: "temperature_max"
+          operator: "gte"
+          value: 90
+          forecast_days: 7
+        - field: "precipitation_probability"
+          operator: "lte"
+          value: 10
+          forecast_days: 7
+      all_must_match: true
+    action:
+      type: "email"
+      subject: "Consider Adjusting Watering Schedule"
+      body: |
+        Hot and dry weather forecasted for the next week.
+
+        Consider increasing watering frequency.

@@ -144,6 +144,12 @@ ENV/
 env.bak/
 venv.bak/
 
+# Configuration files with secrets (keep config.example.yaml in version control)
+config.yaml
+config.yml
+*.local.yaml
+*.local.yml
+
 # Spyder project settings
 .spyderproject
 .spyproject
