@@ -150,6 +150,9 @@ config.yml
 *.local.yaml
 *.local.yml
 
+# Runtime state file
+.weather_alerts_state.json
+
 # Spyder project settings
 .spyderproject
 .spyproject
