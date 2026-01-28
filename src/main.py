@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Dict, Any
 import yaml
 
+from version import __version__
 from weather.forecast import WeatherForecast
 from conditions.evaluator import ConditionEvaluator
 from actions.email import EmailAction
@@ -15,6 +16,11 @@ def parse_args():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
         description="Weather alerts system - monitor forecasts and send notifications"
+    )
+    parser.add_argument(
+        '-v', '--version',
+        action='version',
+        version=f'%(prog)s {__version__}'
     )
     parser.add_argument(
         '--dry-run',
