@@ -103,8 +103,9 @@ def main(dry_run: bool = False):
             if not dry_run:
                 print(f"  - Condition not met")
 
-    # Save state (even in dry-run mode, to track first occurrences)
-    evaluator.save_state()
+    # Save state (only in normal mode - dry-run should have no side effects)
+    if not dry_run:
+        evaluator.save_state()
 
     if not dry_run:
         print(f"\nComplete. {alerts_triggered} alert(s) triggered.")

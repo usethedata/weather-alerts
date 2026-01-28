@@ -186,11 +186,11 @@ class TestDryRunMode:
     @patch('main.load_config')
     @patch('main.WeatherForecast')
     @patch('main.ConditionEvaluator')
-    def test_dry_run_still_saves_state(
+    def test_dry_run_does_not_save_state(
         self, mock_evaluator_class, mock_weather_class,
         mock_load_config, mock_config, mock_forecast_data
     ):
-        """Test that dry-run mode still saves state (for first_occurrence tracking)."""
+        """Test that dry-run mode does not save state (no side effects)."""
         # Setup mocks
         mock_load_config.return_value = mock_config
 
@@ -205,8 +205,8 @@ class TestDryRunMode:
         # Run in dry-run mode
         main(dry_run=True)
 
-        # State should still be saved
-        mock_evaluator.save_state.assert_called_once()
+        # State should NOT be saved in dry-run mode
+        mock_evaluator.save_state.assert_not_called()
 
 
 # =============================================================================
