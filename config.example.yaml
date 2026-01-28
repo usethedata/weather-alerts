@@ -30,7 +30,7 @@ email:
     - "recipient@example.com"
 
 # State file to track conditions (e.g., first freeze already occurred)
-state_file: ".weather_alerts_state.json"
+state_file: "~/.weather_alerts_state.json"
 
 # Alert rules - flexible condition and action definitions
 alert_rules:
