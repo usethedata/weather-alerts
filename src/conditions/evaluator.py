@@ -15,7 +15,7 @@ class ConditionEvaluator:
         Args:
             state_file: Path to state file for tracking occurrences
         """
-        self.state_file = Path(state_file)
+        self.state_file = Path(state_file).expanduser()
         self.state = self._load_state()
 
     def _load_state(self) -> Dict[str, Any]:
