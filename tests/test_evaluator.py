@@ -43,7 +43,7 @@ from unittest.mock import patch
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
-from conditions.evaluator import ConditionEvaluator
+from alerts.evaluator import ConditionEvaluator
 
 
 # =============================================================================
@@ -414,7 +414,7 @@ class TestFirstOccurrenceCondition:
         }
 
         # Mock datetime.now() to return October (month 10, in season)
-        with patch('conditions.evaluator.datetime') as mock_datetime:
+        with patch('alerts.evaluator.datetime') as mock_datetime:
             mock_datetime.now.return_value = datetime(2024, 10, 15)
 
             result = evaluator.evaluate(condition, sample_forecast_data)
@@ -436,7 +436,7 @@ class TestFirstOccurrenceCondition:
         }
 
         # Mock datetime.now() to return July (month 7, before season)
-        with patch('conditions.evaluator.datetime') as mock_datetime:
+        with patch('alerts.evaluator.datetime') as mock_datetime:
             mock_datetime.now.return_value = datetime(2024, 7, 15)
 
             result = evaluator.evaluate(condition, sample_forecast_data)
@@ -457,7 +457,7 @@ class TestFirstOccurrenceCondition:
             'season_end_month': 12
         }
 
-        with patch('conditions.evaluator.datetime') as mock_datetime:
+        with patch('alerts.evaluator.datetime') as mock_datetime:
             mock_datetime.now.return_value = datetime(2024, 10, 15)
 
             # First evaluation - should trigger
@@ -490,7 +490,7 @@ class TestStatePersistence:
             'season_end_month': 12
         }
 
-        with patch('conditions.evaluator.datetime') as mock_datetime:
+        with patch('alerts.evaluator.datetime') as mock_datetime:
             mock_datetime.now.return_value = datetime(2024, 10, 15)
 
             # First instance - trigger the condition

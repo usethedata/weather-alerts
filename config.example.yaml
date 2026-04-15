@@ -1,14 +1,12 @@
-# Weather Alerts Configuration Example
+# Weather Tools Configuration Example
 # Copy this file to config.yaml and fill in your actual values
 # NEVER commit config.yaml to version control!
 
 # Location settings
 location:
-  # US ZIP code or lat/lon coordinates
-  zip_code: "12345"
-  # Alternative: use coordinates
-  # latitude: 40.7128
-  # longitude: -74.0060
+  # Provide latitude and longitude for your location
+  latitude: 40.7128
+  longitude: -74.0060
 
 # Weather API settings
 weather:
@@ -17,12 +15,26 @@ weather:
   # Only needed if using OpenWeatherMap
   # api_key: "your_api_key_here"
 
+# Data collection settings
+# Used by collect.py to archive forecasts and actuals
+collection:
+  # Absolute path to the weather data directory (not committed — set per machine)
+  data_directory: "/path/to/weather/data"
+  # Maximum forecast days to collect (actual days returned depends on the source;
+  # NWS returns up to 7 days, OpenWeatherMap free tier up to 5, Open-Meteo up to 16)
+  forecast_days: 10
+  # Forecast sources to collect from
+  sources:
+    - nws
+  # NWS observation station ID for actuals collection
+  # Find your nearest station at https://www.weather.gov/
+  observation_station: "KXXX"
+
 # Email settings for alerts
 email:
   smtp_host: "smtp.fastmail.com"
   smtp_port: 465
   use_ssl: true
-  # Your FastMail credentials
   username: "your_email@fastmail.com"
   password: "your_app_password_here"
   from_address: "your_email@fastmail.com"
