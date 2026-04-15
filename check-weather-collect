@@ -1,5 +1,17 @@
 #!/usr/bin/env bash
-# Run weather data collection using the project's virtual environment
+# Run weather data collection using the project's virtual environment.
+#
+# When LOG_DIR is set in the environment (e.g., by launchd), output is
+# redirected to a timestamped log file in that directory.
+# Otherwise (interactive runs), output goes to the terminal.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-exec "$SCRIPT_DIR/venv/bin/python" "$SCRIPT_DIR/src/collect.py" "$@"
+
+if [ -n "$LOG_DIR" ]; then
+    mkdir -p "$LOG_DIR"
+    TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+    LOG_FILE="$LOG_DIR/weather-collect-$TIMESTAMP.log"
+    exec "$SCRIPT_DIR/venv/bin/python" "$SCRIPT_DIR/src/collect.py" "$@" > "$LOG_FILE" 2>&1
+else
+    exec "$SCRIPT_DIR/venv/bin/python" "$SCRIPT_DIR/src/collect.py" "$@"
+fi
