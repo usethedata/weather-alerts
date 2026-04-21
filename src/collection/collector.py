@@ -22,7 +22,7 @@ class ForecastCollector:
             weather_config: Weather API configuration
             location_config: Location information (latitude/longitude)
         """
-        self.data_dir = Path(collection_config['data_directory'])
+        self.data_dir = Path(collection_config['data_directory']).expanduser()
         self.forecast_days = collection_config.get('forecast_days', 10)
         self.sources = collection_config.get('sources', ['nws'])
         self.weather_config = weather_config

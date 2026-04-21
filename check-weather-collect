@@ -1,17 +1,30 @@
 #!/usr/bin/env bash
 # Run weather data collection using the project's virtual environment.
 #
-# When LOG_DIR is set in the environment (e.g., by launchd), output is
+# Venv location is resolved via a fallback chain:
+#   1. $WEATHER_VENV (explicit override)
+#   2. ~/.local/share/weather-tools/venv (XDG data home, preferred)
+#   3. $SCRIPT_DIR/venv (legacy in-tree fallback)
+#
+# When LOG_DIR is set in the environment (e.g., by a scheduler), output is
 # redirected to a timestamped log file in that directory.
 # Otherwise (interactive runs), output goes to the terminal.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
+if [ -n "$WEATHER_VENV" ]; then
+    VENV="$WEATHER_VENV"
+elif [ -d "$HOME/.local/share/weather-tools/venv" ]; then
+    VENV="$HOME/.local/share/weather-tools/venv"
+else
+    VENV="$SCRIPT_DIR/venv"
+fi
+
 if [ -n "$LOG_DIR" ]; then
     mkdir -p "$LOG_DIR"
     TIMESTAMP=$(date +%Y%m%d-%H%M%S)
     LOG_FILE="$LOG_DIR/weather-collect-$TIMESTAMP.log"
-    exec "$SCRIPT_DIR/venv/bin/python" "$SCRIPT_DIR/src/collect.py" "$@" > "$LOG_FILE" 2>&1
+    exec "$VENV/bin/python" "$SCRIPT_DIR/src/collect.py" "$@" > "$LOG_FILE" 2>&1
 else
-    exec "$SCRIPT_DIR/venv/bin/python" "$SCRIPT_DIR/src/collect.py" "$@"
+    exec "$VENV/bin/python" "$SCRIPT_DIR/src/collect.py" "$@"
 fi

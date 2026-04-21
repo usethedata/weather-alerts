@@ -18,8 +18,10 @@ weather:
 # Data collection settings
 # Used by collect.py to archive forecasts and actuals
 collection:
-  # Absolute path to the weather data directory (not committed — set per machine)
-  data_directory: "/path/to/weather/data"
+  # Path to the weather data directory (not committed — set per deployment).
+  # Leading ~ is expanded by the code, so ~/Dropbox/... style works portably
+  # across macOS and Linux without editing per machine.
+  data_directory: "~/Dropbox/BEWMain/Data/weather"
   # Maximum forecast days to collect (actual days returned depends on the source;
   # NWS returns up to 7 days, OpenWeatherMap free tier up to 5, Open-Meteo up to 16)
   forecast_days: 10

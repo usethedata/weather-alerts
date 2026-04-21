@@ -22,7 +22,7 @@ class ActualsCollector:
             collection_config: Collection settings (data_directory, observation_station)
             location_config: Location information (latitude/longitude)
         """
-        self.data_dir = Path(collection_config['data_directory'])
+        self.data_dir = Path(collection_config['data_directory']).expanduser()
         self.station_id = collection_config.get('observation_station', '')
         self.location_config = location_config
 

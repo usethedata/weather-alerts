@@ -58,7 +58,7 @@ def read_cached_forecast(config: Dict[str, Any]) -> Optional[List[Dict[str, Any]
     if not collection_config:
         return None
 
-    data_dir = Path(collection_config['data_directory'])
+    data_dir = Path(collection_config['data_directory']).expanduser()
     sources = collection_config.get('sources', ['nws'])
     today = datetime.now().strftime('%Y-%m-%d')
 
