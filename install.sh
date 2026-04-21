@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install script for weather-alerts
+# Install script for weather-tools
 # Sets up virtual environment, installs dependencies, and optionally creates shortcuts
 
 set -e
@@ -8,9 +8,13 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 VENV_DIR="$SCRIPT_DIR/venv"
 CONFIG_FILE="$SCRIPT_DIR/config.yaml"
 CONFIG_EXAMPLE="$SCRIPT_DIR/config.example.yaml"
+PLIST_FILE="$SCRIPT_DIR/net.bewilson.weather-collect.plist"
+PLIST_EXAMPLE="$SCRIPT_DIR/net.bewilson.weather-collect.example.plist"
+LAUNCH_AGENTS="$HOME/Library/LaunchAgents"
+PLIST_DEST="$LAUNCH_AGENTS/net.bewilson.weather-collect.plist"
 
-echo "Weather Alerts - Installation"
-echo "=============================="
+echo "Weather Tools - Installation"
+echo "============================"
 echo ""
 
 # Check for Python 3
@@ -58,16 +62,15 @@ else
     if [[ ! "$create_config" =~ ^[Nn]$ ]]; then
         cp "$CONFIG_EXAMPLE" "$CONFIG_FILE"
         echo "Created $CONFIG_FILE"
-        echo "  -> Edit this file with your API keys, email settings, and alert rules."
+        echo "  -> Edit this file with your location, email settings, and alert rules."
     fi
 fi
 
 # Shortcut in ~/bin
 echo ""
-read -p "Create shortcut in ~/bin? (y/N): " create_shortcut
+read -p "Create shortcuts in ~/bin? (y/N): " create_shortcut
 if [[ "$create_shortcut" =~ ^[Yy]$ ]]; then
     BIN_DIR="$HOME/bin"
-    SHORTCUT="$BIN_DIR/check-weather-alerts"
 
     # Create ~/bin if it doesn't exist
     if [ ! -d "$BIN_DIR" ]; then
@@ -76,17 +79,51 @@ if [[ "$create_shortcut" =~ ^[Yy]$ ]]; then
         echo "  -> You may need to add ~/bin to your PATH."
     fi
 
-    # Create or update symlink
-    if [ -L "$SHORTCUT" ] || [ -e "$SHORTCUT" ]; then
-        read -p "  $SHORTCUT already exists. Overwrite? (y/N): " overwrite
-        if [[ "$overwrite" =~ ^[Yy]$ ]]; then
-            rm -f "$SHORTCUT"
-            ln -s "$SCRIPT_DIR/check-weather-alerts" "$SHORTCUT"
-            echo "  Shortcut updated."
+    for script in check-weather-alerts check-weather-collect; do
+        SHORTCUT="$BIN_DIR/$script"
+        if [ -L "$SHORTCUT" ] || [ -e "$SHORTCUT" ]; then
+            read -p "  $SHORTCUT already exists. Overwrite? (y/N): " overwrite
+            if [[ "$overwrite" =~ ^[Yy]$ ]]; then
+                rm -f "$SHORTCUT"
+                ln -s "$SCRIPT_DIR/$script" "$SHORTCUT"
+                echo "  Shortcut updated: $SHORTCUT"
+            fi
+        else
+            ln -s "$SCRIPT_DIR/$script" "$SHORTCUT"
+            echo "  Shortcut created: $SHORTCUT"
         fi
-    else
-        ln -s "$SCRIPT_DIR/check-weather-alerts" "$SHORTCUT"
-        echo "  Shortcut created: $SHORTCUT"
+    done
+fi
+
+# launchd plist setup
+echo ""
+read -p "Install launchd plist for daily weather collection? (y/N): " install_plist
+if [[ "$install_plist" =~ ^[Yy]$ ]]; then
+    if [ ! -f "$PLIST_FILE" ]; then
+        if [ -f "$PLIST_EXAMPLE" ]; then
+            echo "Creating plist from template..."
+            sed "s|/path/to/weather-tools|$SCRIPT_DIR|g; s|/path/to/logs|$HOME/Library/CloudStorage/Dropbox/BEWMain/Data/logs|g" \
+                "$PLIST_EXAMPLE" > "$PLIST_FILE"
+            echo "  Created $PLIST_FILE"
+            echo "  -> Review and edit if the log path needs adjustment."
+        else
+            echo "Error: No plist template found at $PLIST_EXAMPLE"
+        fi
+    fi
+
+    if [ -f "$PLIST_FILE" ]; then
+        mkdir -p "$LAUNCH_AGENTS"
+
+        # Unload existing if present
+        if [ -f "$PLIST_DEST" ]; then
+            echo "  Unloading existing plist..."
+            launchctl unload "$PLIST_DEST" 2>/dev/null || true
+        fi
+
+        cp "$PLIST_FILE" "$PLIST_DEST"
+        launchctl load "$PLIST_DEST"
+        echo "  Plist installed and loaded: $PLIST_DEST"
+        echo "  Weather collection will run daily at 5:00 AM."
     fi
 fi
 
@@ -98,7 +135,9 @@ if [ ! -f "$CONFIG_FILE" ]; then
     echo "  1. Copy config.example.yaml to config.yaml"
     echo "  2. Edit config.yaml with your settings"
     echo "  3. Run: ./check-weather-alerts --dry-run"
+    echo "  4. Run: ./check-weather-collect --dry-run"
 else
     echo "  1. Edit config.yaml with your settings (if not already done)"
     echo "  2. Run: ./check-weather-alerts --dry-run"
+    echo "  3. Run: ./check-weather-collect --dry-run"
 fi

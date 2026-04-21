@@ -1,5 +1,19 @@
 #!/usr/bin/env bash
-# Run weather-alerts using the project's virtual environment
+# Run weather-alerts using the project's virtual environment.
+#
+# Venv location is resolved via a fallback chain:
+#   1. $WEATHER_VENV (explicit override)
+#   2. ~/.local/share/weather-tools/venv (XDG data home, preferred)
+#   3. $SCRIPT_DIR/venv (legacy in-tree fallback)
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-exec "$SCRIPT_DIR/venv/bin/python" "$SCRIPT_DIR/src/main.py" "$@"
+
+if [ -n "$WEATHER_VENV" ]; then
+    VENV="$WEATHER_VENV"
+elif [ -d "$HOME/.local/share/weather-tools/venv" ]; then
+    VENV="$HOME/.local/share/weather-tools/venv"
+else
+    VENV="$SCRIPT_DIR/venv"
+fi
+
+exec "$VENV/bin/python" "$SCRIPT_DIR/src/main.py" "$@"

@@ -24,7 +24,7 @@ from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
-from actions.email import EmailAction
+from alerts.email import EmailAction
 
 
 # =============================================================================
@@ -152,7 +152,7 @@ class TestEmailSending:
     3. We handle errors gracefully
     """
 
-    @patch('actions.email.smtplib.SMTP_SSL')
+    @patch('alerts.email.smtplib.SMTP_SSL')
     def test_send_email_success(self, mock_smtp_class, email_action):
         """
         Test successful email sending.
@@ -181,7 +181,7 @@ class TestEmailSending:
         mock_server.send_message.assert_called_once()
         mock_server.quit.assert_called_once()
 
-    @patch('actions.email.smtplib.SMTP_SSL')
+    @patch('alerts.email.smtplib.SMTP_SSL')
     def test_send_email_with_context(self, mock_smtp_class, email_action):
         """Test that context variables are substituted in subject and body."""
         mock_server = MagicMock()
@@ -202,7 +202,7 @@ class TestEmailSending:
         assert "28 degrees" in body_part
         assert "2024-01-15" in body_part
 
-    @patch('actions.email.smtplib.SMTP_SSL')
+    @patch('alerts.email.smtplib.SMTP_SSL')
     def test_send_email_handles_smtp_error(self, mock_smtp_class, email_action, capsys):
         """
         Test that SMTP errors are handled gracefully.
@@ -226,7 +226,7 @@ class TestEmailSending:
         captured = capsys.readouterr()
         assert "Error sending email" in captured.out
 
-    @patch('actions.email.smtplib.SMTP')
+    @patch('alerts.email.smtplib.SMTP')
     def test_send_email_non_ssl(self, mock_smtp_class, email_config):
         """Test sending email without SSL (using STARTTLS)."""
         # Modify config to not use SSL
@@ -246,7 +246,7 @@ class TestEmailSending:
         mock_smtp_class.assert_called_once()
         mock_server.starttls.assert_called_once()
 
-    @patch('actions.email.smtplib.SMTP_SSL')
+    @patch('alerts.email.smtplib.SMTP_SSL')
     def test_send_email_multiple_recipients(self, mock_smtp_class, email_config):
         """Test sending to multiple recipients."""
         email_config['to_addresses'] = ['one@example.com', 'two@example.com']

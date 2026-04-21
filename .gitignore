@@ -150,6 +150,9 @@ config.yml
 *.local.yaml
 *.local.yml
 
+# launchd plist with machine-specific paths (keep .example.plist in version control)
+net.bewilson.weather-collect.plist
+
 # Runtime state file
 .weather_alerts_state.json
 
@@ -199,6 +202,9 @@ cython_debug/
 
 # Ruff stuff:
 .ruff_cache/
+
+# Claude Code
+CLAUDE.md
 
 # PyPI configuration file
 .pypirc

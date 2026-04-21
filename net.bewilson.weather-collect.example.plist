@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Weather data collection — launchd plist template
+
+  To install:
+  1. Copy this file to net.bewilson.weather-collect.plist
+  2. Replace /path/to/weather-tools with the actual repo path
+  3. Replace /path/to/logs with your log directory (LOG_DIR env var)
+  4. Copy to ~/Library/LaunchAgents/
+  5. Load: launchctl load ~/Library/LaunchAgents/net.bewilson.weather-collect.plist
+
+  The wrapper script (check-weather-collect) reads LOG_DIR and writes a
+  timestamped log file (weather-collect-YYYYMMDD-HHMMSS.log) per run.
+
+  NEVER commit the actual plist (it contains machine-specific paths).
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>net.bewilson.weather-collect</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/path/to/weather-tools/check-weather-collect</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/path/to/weather-tools</string>
+
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>5</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin</string>
+        <key>LOG_DIR</key>
+        <string>/path/to/logs</string>
+    </dict>
+</dict>
+</plist>
