@@ -3,6 +3,9 @@ Project-specific to-do items for weather-tools (GitHub: usethedata/weather-tools
 
 ## Items
 
+- [ ] Harden NWS forecast fetch against transient timeouts.
+    `src/weather/forecast.py` makes two sequential NWS API calls (`/points/{lat,lon}` then the `forecast` URL), both with a hard 10-second timeout and no retry logic. Either call timing out kills the whole forecast. Observed to fail at 05:00 EDT on 2026-04-21 (superbear's final launchd run) and 2026-04-22 (grizzledbear's first systemd run); a manual rerun at 09:09 on 2026-04-22 succeeded, so the endpoint is reachable but slow/flaky at 05:00. Fix: add retries with exponential backoff and a longer connect/read timeout; consider caching the points→gridpoint URL mapping so successful first calls don't have to repeat on retry. Actuals collection has no such issue.
+
 - [ ] Add log-to-file handling in `check-weather-alerts`, matching `check-weather-collect`.
     Currently `check-weather-collect` honors `$LOG_DIR` and writes a timestamped log file when set. `check-weather-alerts` does not — it just execs the Python process. When alerts move to a scheduled run (see "unified daily job" in `CLAUDE.md` Future Plans), logging will matter. Pattern to copy is the existing `LOG_DIR` block in `check-weather-collect`.
 
