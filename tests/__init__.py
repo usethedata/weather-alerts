@@ -1,8 +1,8 @@
 """
-Weather Alerts Test Suite
-=========================
+Weather Tools Test Suite
+========================
 
-This package contains tests for the weather-alerts application.
+This package contains tests for the weather-tools application.
 
 Test Modules:
 - test_evaluator.py: Tests for condition evaluation logic
