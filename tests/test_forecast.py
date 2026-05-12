@@ -323,21 +323,95 @@ class TestAPIIntegration:
         assert len(result) == 2
         assert result[0]['temperature_min'] == 28
 
+    @patch('weather.forecast.time.sleep')
     @patch('weather.forecast.requests.get')
-    def test_nws_forecast_network_error(self, mock_get, nws_config):
-        """Test handling of network errors."""
+    def test_nws_forecast_network_error(self, mock_get, mock_sleep, nws_config):
+        """Test handling of network errors (all retry attempts fail)."""
         import requests
 
         weather_config, location_config = nws_config
         forecast = WeatherForecast(weather_config, location_config)
 
-        # Simulate a network error
         mock_get.side_effect = requests.RequestException("Network error")
 
         result = forecast.get_forecast()
 
-        # Should return None, not crash
         assert result is None
+        # 4 attempts total (initial + 3 retries), each on the points URL
+        assert mock_get.call_count == 4
+        # 3 backoff sleeps between the 4 attempts
+        assert mock_sleep.call_count == 3
+
+    @patch('weather.forecast.time.sleep')
+    @patch('weather.forecast.requests.get')
+    def test_nws_forecast_retries_then_succeeds(
+        self, mock_get, mock_sleep, nws_config, sample_nws_response
+    ):
+        """Test that a transient timeout on the points call is retried."""
+        import requests
+
+        weather_config, location_config = nws_config
+        forecast = WeatherForecast(weather_config, location_config)
+
+        points_response = MagicMock()
+        points_response.json.return_value = {
+            'properties': {
+                'forecast': 'https://api.weather.gov/gridpoints/MRX/71,45/forecast'
+            }
+        }
+        points_response.raise_for_status = MagicMock()
+
+        forecast_response = MagicMock()
+        forecast_response.json.return_value = sample_nws_response
+        forecast_response.raise_for_status = MagicMock()
+
+        # First points attempt times out, second succeeds, then forecast call succeeds.
+        mock_get.side_effect = [
+            requests.exceptions.ReadTimeout("Read timed out."),
+            points_response,
+            forecast_response,
+        ]
+
+        result = forecast.get_forecast(days=2)
+
+        assert result is not None
+        assert len(result) == 2
+        assert mock_get.call_count == 3
+        # One backoff sleep before the successful points retry.
+        mock_sleep.assert_called_once_with(5)
+
+    @patch('weather.forecast.requests.get')
+    def test_nws_points_url_cached_between_calls(
+        self, mock_get, nws_config, sample_nws_response
+    ):
+        """Test that a successful points lookup is reused on later calls."""
+        weather_config, location_config = nws_config
+        forecast = WeatherForecast(weather_config, location_config)
+
+        points_response = MagicMock()
+        points_response.json.return_value = {
+            'properties': {
+                'forecast': 'https://api.weather.gov/gridpoints/MRX/71,45/forecast'
+            }
+        }
+        points_response.raise_for_status = MagicMock()
+
+        def fresh_forecast_response():
+            r = MagicMock()
+            r.json.return_value = sample_nws_response
+            r.raise_for_status = MagicMock()
+            return r
+
+        # First get_forecast: points + forecast. Second: forecast only (cached).
+        mock_get.side_effect = [
+            points_response,
+            fresh_forecast_response(),
+            fresh_forecast_response(),
+        ]
+
+        assert forecast.get_forecast(days=2) is not None
+        assert forecast.get_forecast(days=2) is not None
+        assert mock_get.call_count == 3
 
     @patch('weather.forecast.requests.get')
     def test_openweather_forecast_success(self, mock_get, openweather_config, sample_openweather_response):

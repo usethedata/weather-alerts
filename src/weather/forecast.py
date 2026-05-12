@@ -1,8 +1,49 @@
 """Weather forecast data fetching from various providers."""
 
-from typing import Dict, Any, List, Optional
+import sys
+import time
+from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime, timedelta
 import requests
+
+
+# api.weather.gov is occasionally slow at 05:00 local time when the scheduled
+# collection runs. Retry with progressive backoff before giving up.
+_NWS_REQUEST_TIMEOUT = 30
+_NWS_RETRY_BACKOFF_SECONDS: Tuple[int, ...] = (5, 15, 60)
+
+
+def _nws_get_with_retry(url: str, description: str) -> requests.Response:
+    """GET an NWS URL, retrying on transient failures.
+
+    Up to 4 attempts (initial + 3 retries) with 5s/15s/60s waits in between.
+    Each non-final failure is logged as a warning; the final failure is logged
+    as an error and the last exception is re-raised.
+    """
+    attempts = len(_NWS_RETRY_BACKOFF_SECONDS) + 1
+    last_exc: Optional[requests.RequestException] = None
+    for attempt in range(1, attempts + 1):
+        try:
+            response = requests.get(url, timeout=_NWS_REQUEST_TIMEOUT)
+            response.raise_for_status()
+            return response
+        except requests.RequestException as e:
+            last_exc = e
+            if attempt < attempts:
+                backoff = _NWS_RETRY_BACKOFF_SECONDS[attempt - 1]
+                print(
+                    f"Warning: {description} attempt {attempt}/{attempts} failed: {e}. "
+                    f"Retrying in {backoff}s.",
+                    file=sys.stderr,
+                )
+                time.sleep(backoff)
+            else:
+                print(
+                    f"Error: {description} failed after {attempts} attempts: {e}",
+                    file=sys.stderr,
+                )
+    assert last_exc is not None
+    raise last_exc
 
 
 class WeatherForecast:
@@ -18,6 +59,7 @@ class WeatherForecast:
         self.provider = weather_config.get('provider', 'nws')
         self.api_key = weather_config.get('api_key')
         self.location = location_config
+        self._nws_points_cache: Dict[Tuple[float, float], str] = {}
 
     def get_forecast(self, days: int = 7) -> Optional[List[Dict[str, Any]]]:
         """Get weather forecast for the specified number of days.
@@ -54,26 +96,22 @@ class WeatherForecast:
             return None
 
         try:
-            # Get grid endpoint
-            points_url = f"https://api.weather.gov/points/{lat},{lon}"
-            response = requests.get(points_url, timeout=10)
-            response.raise_for_status()
+            forecast_url = self._nws_points_cache.get((lat, lon))
+            if forecast_url is None:
+                points_url = f"https://api.weather.gov/points/{lat},{lon}"
+                response = _nws_get_with_retry(points_url, "NWS points lookup")
+                points_data = response.json()
+                forecast_url = points_data['properties']['forecast']
+                self._nws_points_cache[(lat, lon)] = forecast_url
 
-            points_data = response.json()
-            forecast_url = points_data['properties']['forecast']
-
-            # Get forecast
-            forecast_response = requests.get(forecast_url, timeout=10)
-            forecast_response.raise_for_status()
-
+            forecast_response = _nws_get_with_retry(forecast_url, "NWS forecast fetch")
             forecast_data = forecast_response.json()
             periods = forecast_data['properties']['periods']
 
-            # Normalize data
             return self._normalize_nws_data(periods, days)
 
-        except requests.RequestException as e:
-            print(f"Error fetching NWS data: {e}")
+        except requests.RequestException:
+            # _nws_get_with_retry already logged the final error.
             return None
         except (KeyError, ValueError) as e:
             print(f"Error parsing NWS data: {e}")
