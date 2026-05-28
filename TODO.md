@@ -6,9 +6,6 @@ Project-specific to-do items for weather-tools (GitHub: usethedata/weather-tools
 - [ ] Rename `check-weather-collect` to something more meaningful.
     The current name is generic. A name along the lines of `get-weather-forecasts-actuals` describes what the script actually does (retrieves the forecast and yesterday's actuals from NWS and writes them to the archive). Any rename must also update the systemd service unit in chezmoi (`dot_config/systemd/user/weather-collect.service`: `ExecStart`), the `$LOG_DIR` filename pattern in the wrapper, any `~/bin` symlinks created by `install.sh`, and references in `README.md`, `CLAUDE.md`, and `TODO.md`. Consider renaming `check-weather-alerts` at the same time for consistency.
 
-- [ ] Persist the NWS points→gridpoint URL cache across runs.
-    `src/weather/forecast.py` now caches the `/points/{lat,lon}` → forecast URL mapping in memory for the lifetime of a `WeatherForecast` instance, but each scheduled run starts fresh and still has to make the points call. The mapping is effectively static for a fixed location, so a small on-disk cache (e.g., `~/.cache/weather-tools/nws-points.json`, with an occasional refresh) would let routine runs skip the points call entirely and only hit the forecast URL. Hold off until we see whether the retry + in-memory cache work (added 2026-05-12) is enough to eliminate the 05:00 failures on its own.
-
 - [ ] Add log-to-file handling in `check-weather-alerts`, matching `check-weather-collect`.
     Currently `check-weather-collect` honors `$LOG_DIR` and writes a timestamped log file when set. `check-weather-alerts` does not — it just execs the Python process. When alerts move to a scheduled run (see "unified daily job" in `CLAUDE.md` Future Plans), logging will matter. Pattern to copy is the existing `LOG_DIR` block in `check-weather-collect`.
 
