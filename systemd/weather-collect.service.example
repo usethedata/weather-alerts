@@ -1,0 +1,9 @@
+[Unit]
+Description=Weather data collection (gardening)
+After=network.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/Dropbox/BEWMain/Progs/Ongoing/Gardening/weather-tools
+Environment=LOG_DIR=%h/Dropbox/BEWMain/Data/logs
+ExecStart=%h/Dropbox/BEWMain/Progs/Ongoing/Gardening/weather-tools/check-weather-collect
